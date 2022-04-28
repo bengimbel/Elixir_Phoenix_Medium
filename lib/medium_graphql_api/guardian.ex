@@ -24,9 +24,6 @@ defmodule MediumGraphqlApi.Guardian do
       nil -> {:error, :resource_not_found}
       user -> {:ok, user}
     end
-    user = id
-    |> Accounts.get_user!()
-    {:ok, user}
   end
   def resource_from_claims(_claims) do
     {:error, :reason_for_error}
