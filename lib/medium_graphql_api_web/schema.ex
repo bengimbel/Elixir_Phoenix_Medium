@@ -1,10 +1,26 @@
 defmodule MediumGraphqlApiWeb.Schema do
   use Absinthe.Schema
+
   alias MediumGraphqlApiWeb.Resolvers
   alias MediumGraphqlApiWeb.Schema.Middleware
+  alias MediumGraphqlApi.Accounts
+  alias MediumGraphqlApi.Blog
 
   # import Types
   import_types(MediumGraphqlApiWeb.Schema.Types)
+
+  def context(ctx) do
+    loader =
+      Dataloader.new
+      |> Dataloader.add_source(Accounts, Accounts.data())
+      |> Dataloader.add_source(Blog, Blog.data())
+
+    Map.put(ctx, :loader, loader)
+  end
+
+  def plugins do
+    [Absinthe.Middleware.Dataloader] ++ Absinthe.Plugin.defaults()
+  end
 
   query do
     @desc "Get a list of all users"
@@ -26,6 +42,20 @@ defmodule MediumGraphqlApiWeb.Schema do
     field :login_user, type: :session_type do
       arg(:input, non_null(:session_input_type))
       resolve(&Resolvers.SessionResolver.login_user/3)
+    end
+
+    @desc "Create a post"
+    field :create_post, type: :post_type do
+      arg(:input, non_null(:post_input_type))
+      middleware(Middleware.Authorize, :any)
+      resolve(&Resolvers.PostResolver.create_post/3)
+    end
+
+    @desc "Create a comment"
+    field :create_comment, type: :comment_type do
+      arg(:input, non_null(:comment_input_type))
+      middleware(Middleware.Authorize, :any)
+      resolve(&Resolvers.CommentResolver.create_comment/3)
     end
   end
 
